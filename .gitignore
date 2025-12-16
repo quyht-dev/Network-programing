@@ -1,0 +1,6 @@
+﻿# Sử dụng để bỏ qua việc theo dõi các tệp và thư mục nhất định trong Git
+.vs/
+bin/
+obj/
+*.log
+*.tmp
