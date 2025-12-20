@@ -1,7 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <None Remove="Images\tic-tac-toe-seamless-background-on-dark-blue-illustration-vector.jpg" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\TicTacToe.Shared\TicTacToe.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Images\tic-tac-toe-seamless-background-on-dark-blue-illustration-vector.jpg" />
   </ItemGroup>
 
   <PropertyGroup>
