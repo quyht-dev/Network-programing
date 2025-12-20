@@ -1,17 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 18
-VisualStudioVersion = 18.1.11312.151 d18.0
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35327.3
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "tic-tac-toe", "tic-tac-toe\tic-tac-toe.csproj", "{BDEC6090-ECD4-1938-DE0F-E8AB4068633F}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{2A0C1F56-FFD4-4999-87D7-F3ECF1E2D88C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TicTacToe.Shared", "src\TicTacToe.Shared\TicTacToe.Shared.csproj", "{3572760F-3F60-4EA2-BCC1-8ADEA9F33971}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TicTacToe.Server", "src\TicTacToe.Server\TicTacToe.Server.csproj", "{7383DB12-AC39-4957-AD4D-7A7BBE06C443}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TicTacToe.Server", "src\TicTacToe.Server\TicTacToe.Server.csproj", "{7383DB12-AC39-4957-AD4D-7A7BBE06C443}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TicTacToe.Client", "src\TicTacToe.Client\TicTacToe.Client.csproj", "{D0F05860-477D-46FD-90A3-DD6F838175B9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TicTacToe.Client", "src\TicTacToe.Client\TicTacToe.Client.csproj", "{D0F05860-477D-46FD-90A3-DD6F838175B9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -19,14 +15,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{BDEC6090-ECD4-1938-DE0F-E8AB4068633F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{BDEC6090-ECD4-1938-DE0F-E8AB4068633F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{BDEC6090-ECD4-1938-DE0F-E8AB4068633F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{BDEC6090-ECD4-1938-DE0F-E8AB4068633F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{3572760F-3F60-4EA2-BCC1-8ADEA9F33971}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3572760F-3F60-4EA2-BCC1-8ADEA9F33971}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{3572760F-3F60-4EA2-BCC1-8ADEA9F33971}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{3572760F-3F60-4EA2-BCC1-8ADEA9F33971}.Release|Any CPU.Build.0 = Release|Any CPU
 		{7383DB12-AC39-4957-AD4D-7A7BBE06C443}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{7383DB12-AC39-4957-AD4D-7A7BBE06C443}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7383DB12-AC39-4957-AD4D-7A7BBE06C443}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -40,7 +28,6 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{3572760F-3F60-4EA2-BCC1-8ADEA9F33971} = {2A0C1F56-FFD4-4999-87D7-F3ECF1E2D88C}
 		{7383DB12-AC39-4957-AD4D-7A7BBE06C443} = {2A0C1F56-FFD4-4999-87D7-F3ECF1E2D88C}
 		{D0F05860-477D-46FD-90A3-DD6F838175B9} = {2A0C1F56-FFD4-4999-87D7-F3ECF1E2D88C}
 	EndGlobalSection
