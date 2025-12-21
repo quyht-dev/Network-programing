@@ -1,13 +1,25 @@
-﻿using System.Windows.Controls;
+﻿using System;
+using System.Windows;
+using System.Windows.Controls;
 
-namespace TicTacToe.Client.Views
+namespace TicTacToe.Client.Views;
+
+public partial class HomeView : UserControl
 {
-    // Quan trọng: Phải kế thừa từ UserControl nếu XAML của bạn là <UserControl>
-    public partial class HomeView : UserControl
+    public event Action? PlayRequested;
+
+    public HomeView()
     {
-        public HomeView()
-        {
-            InitializeComponent(); // Lệnh này dùng để nạp giao diện từ XAML lên
-        }
+        InitializeComponent(); // chỉ gọi, không tự định nghĩa
+    }
+
+    private void Play_Click(object sender, RoutedEventArgs e)
+    {
+        PlayRequested?.Invoke();
+    }
+
+    private void Exit_Click(object sender, RoutedEventArgs e)
+    {
+        Application.Current.Shutdown();
     }
 }

@@ -5,7 +5,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\TicTacToe.Shared\TicTacToe.Shared.csproj" />
   </ItemGroup>
 
   <ItemGroup>

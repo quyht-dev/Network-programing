@@ -1,23 +1,20 @@
-﻿using System.Text;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+﻿using System.Windows;
+using TicTacToe.Client.Views;
 
 namespace TicTacToe.Client;
 
-/// <summary>
-/// Interaction logic for MainWindow.xaml
-/// </summary>
 public partial class MainWindow : Window
 {
     public MainWindow()
     {
         InitializeComponent();
+
+        var home = new HomeView();
+        home.PlayRequested += () =>
+        {
+            MainContent.Content = new GameView();
+        };
+
+        MainContent.Content = home;
     }
 }

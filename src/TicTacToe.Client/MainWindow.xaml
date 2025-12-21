@@ -3,13 +3,11 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:TicTacToe.Client"
-        xmlns:views="clr-namespace:TicTacToe.Client.Views" 
         mc:Ignorable="d"
-        Title="Tic tac toe" Height="450" Width="800">
+        Title="Tic-Tac-Toe" Height="520" Width="800"
+        WindowStartupLocation="CenterScreen">
 
     <Grid>
-        <views:HomeView/>
+        <ContentControl x:Name="MainContent"/>
     </Grid>
-
 </Window>
