@@ -6,7 +6,6 @@
         mc:Ignorable="d"
         Title="Tic-Tac-Toe" Height="520" Width="800"
         WindowStartupLocation="CenterScreen">
-
     <Grid>
         <ContentControl x:Name="MainContent"/>
     </Grid>

@@ -8,6 +8,6 @@ public partial class GameView : UserControl
     public GameView()
     {
         InitializeComponent();
-        DataContext = new MainViewModel(); // VM chơi game (socket + board)
+        DataContext = new MainViewModel();
     }
 }
