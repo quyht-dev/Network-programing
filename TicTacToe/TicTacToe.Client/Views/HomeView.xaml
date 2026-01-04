@@ -7,7 +7,6 @@
              d:DesignHeight="450" d:DesignWidth="800">
 
     <UserControl.Resources>
-        <!-- Button bo góc chuẩn -->
         <Style x:Key="RoundButtonStyle" TargetType="Button">
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Foreground" Value="White"/>
@@ -22,8 +21,15 @@
                                               VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter Property="Opacity" Value="0.5"/>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Opacity" Value="0.9"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="0.95" ScaleY="0.95"/>
+                                    </Setter.Value>
+                                </Setter>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -36,60 +42,62 @@
         <Grid.Background>
             <ImageBrush ImageSource="/Images/tic-tac-toe-seamless-background-on-dark-blue-illustration-vector.jpg" 
                         Stretch="UniformToFill" 
-                        Opacity="0.7"/>
+                        Opacity="0.3"/>
         </Grid.Background>
 
+        <Border Background="#CC16213E"/>
+
         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+            <Border Background="#20FFFFFF" CornerRadius="20" Padding="30,15" Margin="0,0,0,40">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="X" FontSize="56" FontWeight="Black" Foreground="#E74C3C" Margin="0,0,10,0"/>
+                    <TextBlock Text="TIC TAC TOE" 
+                               FontSize="48" 
+                               FontWeight="Bold" 
+                               Foreground="#4CAF50"
+                               VerticalAlignment="Center"
+                               FontFamily="Segoe UI"/>
+                    <TextBlock Text="O" FontSize="56" FontWeight="Black" Foreground="#3498DB" Margin="10,0,0,0"/>
+                </StackPanel>
+            </Border>
 
-            <TextBlock Text="TIC TAC TOE" 
-                       FontSize="48" 
-                       FontWeight="Bold" 
-                       Foreground="#4CAF50"
-                       Background="Cyan"
-                       HorizontalAlignment="Center"
-                       Margin="0,0,0,40"
-                       Padding="20"
-                       FontFamily="Segoe UI"/>
-
-            <!-- Play Button -->
             <Button Content="CHƠI NGAY"
                     Click="Play_Click"
                     Style="{StaticResource RoundButtonStyle}"
-                    Tag="8"
+                    Tag="25"
                     FontSize="20"
                     FontWeight="Bold"
-                    Background="#4CAF50"
-                    Width="200"
-                    Height="50"
+                    Background="#27AE60"
+                    Width="240"
+                    Height="55"
                     Margin="0,0,0,20"/>
 
-            <!-- Settings Button (chưa làm thì để tạm) -->
             <Button Content="CÀI ĐẶT"
                     Style="{StaticResource RoundButtonStyle}"
-                    Tag="6"
+                    Tag="20"
                     FontSize="18"
                     FontWeight="SemiBold"
                     Background="#2196F3"
-                    Width="180"
-                    Height="45"
+                    Width="200"
+                    Height="50"
                     Margin="0,0,0,15"/>
 
-            <!-- Exit Button -->
             <Button Content="THOÁT"
                     Click="Exit_Click"
                     Style="{StaticResource RoundButtonStyle}"
-                    Tag="6"
+                    Tag="20"
                     FontSize="18"
                     FontWeight="SemiBold"
                     Background="#F44336"
-                    Width="180"
-                    Height="45"/>
+                    Width="200"
+                    Height="50"/>
 
-            <TextBlock Text="Network Programming Project" 
-                       FontSize="12" 
-                       Foreground="#888888"
+            <TextBlock Text="2026 Network Programming Group Project" 
+                       FontSize="13" 
+                       Foreground="#AAB1B6"
                        HorizontalAlignment="Center"
-                       Margin="0,40,0,0"/>
+                       Margin="0,50,0,0"
+                       FontStyle="Italic"/>
         </StackPanel>
     </Grid>
 </UserControl>
