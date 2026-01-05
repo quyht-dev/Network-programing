@@ -1,9 +1,8 @@
 ﻿// CardGameClient/Network/GameClient.cs
 using System;
-using System.Net.Sockets;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.SignalR.Client;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -21,42 +20,70 @@ namespace CardGameClient.Network
         public JObject Payload { get; set; }
     }
 
+    /// <summary>
+    /// Client giao tiếp với server qua SignalR
+    /// Thay thế TCP bằng HubConnection
+    /// </summary>
     internal sealed class GameClient
     {
-        private TcpClient _tcp;
-        private NetworkStream _stream;
+        private HubConnection _hubConnection;
         private CancellationTokenSource _cts;
 
+        // Semaphore vẫn giữ để đảm bảo thread safety khi gửi
         private readonly SemaphoreSlim _sendLock = new SemaphoreSlim(1, 1);
 
-        public bool IsConnected => _tcp != null && _tcp.Connected;
+        public bool IsConnected => _hubConnection?.State == HubConnectionState.Connected;
 
         public event Action<NetMessage> MessageReceived;
         public event Action<string> Disconnected;
 
+        /// <summary>
+        /// Kết nối đến SignalR server
+        /// </summary>
         public async Task ConnectAsync(string host, int port)
         {
-            _cts = new CancellationTokenSource();
-            _tcp = new TcpClient();
-            _tcp.NoDelay = true;
+            try
+            {
+                _cts = new CancellationTokenSource();
 
-            await _tcp.ConnectAsync(host, port);
-            _stream = _tcp.GetStream();
+                // Xây dựng URL SignalR 
+                // Lưu ý: SignalR mặc định dùng /gameHub (chứ không phải /gamehub)
+                string url = $"http://{host}:{port}/gameHub";
 
-            _ = Task.Run(() => ReadLoopAsync(_cts.Token));
+                // Tạo HubConnection với cấu hình đơn giản
+                _hubConnection = new HubConnectionBuilder()
+                    .WithUrl(url)
+                    .WithAutomaticReconnect() // Tự động reconnect nếu mất kết nối
+                    .Build();
+
+                // Đăng ký handler nhận message từ server
+                _hubConnection.On<NetMessage>("ReceiveMessage", (msg) =>
+                {
+                    MessageReceived?.Invoke(msg);
+                });
+
+                // Xử lý sự kiện ngắt kết nối
+                _hubConnection.Closed += OnConnectionClosed;
+
+                // Bắt đầu kết nối
+                await _hubConnection.StartAsync(_cts.Token);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"SignalR connection failed: {ex.Message}", ex);
+            }
         }
 
-        public void Disconnect()
-        {
-            try { _cts?.Cancel(); } catch { }
-            try { _stream?.Close(); } catch { }
-            try { _tcp?.Close(); } catch { }
-        }
-
+        /// <summary>
+        /// Gửi message đến server qua SignalR
+        /// </summary>
+        // CardGameClient/Network/GameClient.cs
         public async Task SendAsync(string type, object payload, string requestId = null)
         {
-            if (_stream == null) return;
+            if (_hubConnection?.State != HubConnectionState.Connected)
+                return;
 
+            // Tạo message object
             var msg = new NetMessage
             {
                 Type = type,
@@ -64,15 +91,46 @@ namespace CardGameClient.Network
                 Payload = payload == null ? new JObject() : JObject.FromObject(payload)
             };
 
-            byte[] jsonBytes = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(msg));
-            byte[] header = BitConverter.GetBytes(System.Net.IPAddress.HostToNetworkOrder(jsonBytes.Length));
-
             await _sendLock.WaitAsync();
             try
             {
-                await _stream.WriteAsync(header, 0, 4);
-                await _stream.WriteAsync(jsonBytes, 0, jsonBytes.Length);
-                await _stream.FlushAsync();
+                // Gọi method tương ứng với type
+                switch (type)
+                {
+                    case "join":
+                        await _hubConnection.InvokeAsync("Join",
+                            msg.Payload.Value<string>("name"),
+                            msg.Payload.Value<string>("roomId"));
+                        break;
+
+                    case "ready":
+                        await _hubConnection.InvokeAsync("Ready",
+                            msg.Payload.Value<bool>("ready"));
+                        break;
+
+                    case "play":
+                        var cards = msg.Payload["cards"]?.ToObject<string[]>() ?? new string[0];
+                        await _hubConnection.InvokeAsync("Play", cards);
+                        break;
+
+                    case "pass":
+                        await _hubConnection.InvokeAsync("Pass");
+                        break;
+
+                    case "chat":
+                        await _hubConnection.InvokeAsync("Chat",
+                            msg.Payload.Value<string>("text"));
+                        break;
+
+                    case "ping":
+                        await _hubConnection.InvokeAsync("Ping", msg.Payload);
+                        break;
+
+                    default:
+                        // Fallback: gửi nguyên message nếu không biết type
+                        await _hubConnection.InvokeAsync("SendMessage", msg);
+                        break;
+                }
             }
             finally
             {
@@ -80,60 +138,38 @@ namespace CardGameClient.Network
             }
         }
 
-        private async Task ReadLoopAsync(CancellationToken ct)
+        /// <summary>
+        /// Ngắt kết nối
+        /// </summary>
+        public async void Disconnect()
         {
             try
             {
-                while (!ct.IsCancellationRequested)
+                _cts?.Cancel();
+                if (_hubConnection != null)
                 {
-                    byte[] header = await ReadExactAsync(4, ct);
-                    if (header == null) break;
-
-                    int len = System.Net.IPAddress.NetworkToHostOrder(BitConverter.ToInt32(header, 0));
-                    if (len <= 0 || len > 2_000_000)
-                        throw new Exception("Bad frame length: " + len);
-
-                    byte[] payload = await ReadExactAsync(len, ct);
-                    if (payload == null) break;
-
-                    string json = Encoding.UTF8.GetString(payload);
-                    NetMessage msg = null;
-                    try
-                    {
-                        msg = JsonConvert.DeserializeObject<NetMessage>(json);
-                    }
-                    catch
-                    {
-                        // ignore bad message
-                    }
-
-                    if (msg != null)
-                        MessageReceived?.Invoke(msg);
+                    await _hubConnection.StopAsync();
+                    await _hubConnection.DisposeAsync();
                 }
             }
-            catch (Exception ex)
+            catch
             {
-                Disconnected?.Invoke(ex.Message);
+                // Ignore errors during disconnect
             }
             finally
             {
-                Disconnected?.Invoke("Connection closed");
-                Disconnect();
+                Disconnected?.Invoke("Client disconnected");
             }
         }
 
-        private async Task<byte[]> ReadExactAsync(int n, CancellationToken ct)
+        /// <summary>
+        /// Xử lý khi kết nối bị đóng
+        /// </summary>
+        private Task OnConnectionClosed(Exception ex)
         {
-            byte[] buf = new byte[n];
-            int offset = 0;
-
-            while (offset < n)
-            {
-                int read = await _stream.ReadAsync(buf, offset, n - offset, ct);
-                if (read <= 0) return null;
-                offset += read;
-            }
-            return buf;
+            string reason = ex?.Message ?? "Connection closed";
+            Disconnected?.Invoke(reason);
+            return Task.CompletedTask;
         }
     }
 }

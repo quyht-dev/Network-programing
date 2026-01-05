@@ -32,8 +32,8 @@ namespace CardGameClient.Game
         {
             _ui = ui;
 
-            Host = "127.0.0.1";
-            PortText = "7777";
+            Host = "localhost";
+            PortText = "5145";
             PlayerName = "Player";
             RoomId = "ROOM-1";
 
