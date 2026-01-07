@@ -38,6 +38,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 });
 
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<BlogService>();
 builder.Services.AddSession();
 
 var app = builder.Build();
@@ -45,6 +46,8 @@ var app = builder.Build();
 app.UseStaticFiles();
 app.UseRouting();
 app.UseSession();
+
+app.MapControllers();
 
 // Gọi Index gom tất cả router
 RouteRegistry.MapAllRoutes(app);

@@ -1,33 +1,28 @@
 using BlogSystem.Services;
 using Microsoft.AspNetCore.Mvc;
 
-namespace BlogSystem.Controllers;
+namespace BlogSystem.Controllers.Api;
 
 // Model cho request
-// Mục đích lấy dữ liệu từ body của fetch từ frontend gửi lên
 public class LoginRequest
 {
     public string? Email { get; set; }
     public string? Password { get; set; }
 }
 
-public class AuthController : Controller
+[ApiController]
+[Route("api/auth")]
+public class AuthApiController : ControllerBase
 {
     private readonly AuthService _authService;
 
-    public AuthController(AuthService authService)
+    public AuthApiController(AuthService authService)
     {
         _authService = authService;
     }
 
-    // GET: /login
-    public IActionResult Login()
-    {
-        return View();
-    }
-
-    // POST: /login
-    [HttpPost]
+    // POST: api/auth/login
+    [HttpPost("login")]
     public IActionResult Login([FromBody] LoginRequest request)
     {
         if (request.Email == null || request.Password == null)
@@ -64,8 +59,8 @@ public class AuthController : Controller
         });
     }
 
-    // POST: /logout
-    [HttpPost]
+    // POST: api/auth/logout
+    [HttpPost("logout")]
     public IActionResult Logout()
     {
         HttpContext.Session.Clear();

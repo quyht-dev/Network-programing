@@ -24,44 +24,6 @@
 
                     <div id="message"></div>
 
-                    @* 
-                    ***********************************************
-                    Sử dụng fetch để gửi dữ liệu từ form lên Server 
-                    ***********************************************
-                    *@
-                    <script>
-
-                      document.getElementById("loginForm").addEventListener('submit', async (e) => {
-                        e.preventDefault();
-
-                        const email = document.getElementById("typeEmailX").value;
-                        const password = document.getElementById("typePasswordX").value;
-
-                        console.log(email, password);
-
-                        const response = await (fetch("/Auth/Login", {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({email, password})
-                        }));
-
-                        const result = await response.json();
-
-                        console.log(result);
-
-                        if (result.success) 
-                        {
-                          document.getElementById("message").innerHTML = `<div class="bg-success p-3">${result.message}</div>`;
-                          setTimeout(() => 
-                            window.location.href = "/Home/Index", 2000
-                          ); 
-                        } else {
-                          document.getElementById("message").innerHTML = `<div class="bg-danger p-3">${result.message}</div>`; 
-                        }
-                      });
-
-                    </script>
-
                     <p class="small pb-lg-2"><a class="text-white-50" href="#!">Forgot password?</a></p>
 
                     <button data-mdb-button-init data-mdb-ripple-init class="btn btn-outline-light btn-lg px-5" type="submit">Login</button>
