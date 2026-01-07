@@ -1,0 +1,68 @@
+<section class="container d-flex flex-column align-items-center h-100">
+    @* Banner Chính *@
+    <div 
+    style="
+        background: linear-gradient(rgba(42, 42, 42, 0.6)), 
+        url('/images/banner-city-landscape-of-silhouettes-vector.jpg');
+        
+        background-size: cover;
+        background-position: center;"
+
+        class="
+        d-flex 
+        justify-content-center 
+        align-items-center
+        flex-column
+        bg-dark-overlay
+        text-white 
+        text-center 
+        w-100
+        h-100
+        p-5
+        mt-3
+        mb-3"
+    >
+        @* Nội dung *@
+        <h1 class="fw-bold fs-1">BLOG SYSTEM</h1>
+        <h3>Viết Ra Suy Nghĩ Của Bạn</h3>
+    </div>
+
+    @* Danh sách Card Blog *@
+    <div class="d-flex flex-column align-items-center w-75">
+        @* Tin hàng đầu (mới nhất) *@
+        <div class="card mb-3">
+            <div class="row g-0">
+                <div class="col-md-4">
+                <img src="images/cat_beautiful.jpg" class="img-fluid rounded-start" alt="...">
+                </div>
+                <div class="col-md-8">
+                    <div class="card-body">
+                        <h5 class="card-title">Card title</h5>
+                        <p class="card-text">This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.</p>
+                        <a href="#" class="btn btn-primary">Go somewhere</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* Các tin khác (Theo thứ tự) *@
+        <div class="container mb-5">
+            <div class="row g-2">
+
+                @* Cards *@
+                <div class="col-4">
+                    <div class="card">
+                        <img src="images/cat_beautiful.jpg" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <h5 class="card-title">Card title</h5>
+                            <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card’s content.</p>
+                            <a href="#" class="btn btn-primary">Go somewhere</a>
+                        </div>
+                    </div>
+                </div>
+
+                
+            </div>
+        </div>
+    </div>
+</section>

@@ -1,4 +1,4 @@
-<section class="gradient-custom">
+<section class="gradient-custom h-100">
   <div class="container py-5 h-100">
     <div class="row d-flex justify-content-center align-items-center h-100">
       <div class="col-12 col-md-8 col-lg-6 col-xl-5">
@@ -11,7 +11,7 @@
 
                 <p class="text-white-50 mb-5">Please enter your login and password!</p>
 
-                <form method="post" asp-controller="Auth" asp-action="Login">
+                <form id="loginForm" method="post" asp-controller="Auth" asp-action="Login">
                     <div data-mdb-input-init class="form-outline form-white mb-4">
                         <input type="email" name="email" id="typeEmailX" class="form-control form-control-lg" placeholder="Enter your email"/>
                         <label class="form-label" for="typeEmailX">Email</label>
@@ -22,16 +22,45 @@
                         <label class="form-label" for="typePasswordX">Password</label>
                     </div>
 
-                    @if (ViewData["Error"] != null){
-                        <div class="bg-danger rounded-2 p-3 mb-2">@ViewData["Error"]</div>
-                    } else if (ViewData["Success"] != null) {
-                        <div class="bg-success rounded-2 p-3 mb-2">@ViewData["Success"]</div>
-                        <script>
-                            setTimeout(function () {
-                                window.location.href = '@Url.Action("Login", "Auth")';
-                            }, 3000); @* Chuyển sau 3 giây *@
-                        </script>
-                    }
+                    <div id="message"></div>
+
+                    @* 
+                    ***********************************************
+                    Sử dụng fetch để gửi dữ liệu từ form lên Server 
+                    ***********************************************
+                    *@
+                    <script>
+
+                      document.getElementById("loginForm").addEventListener('submit', async (e) => {
+                        e.preventDefault();
+
+                        const email = document.getElementById("typeEmailX").value;
+                        const password = document.getElementById("typePasswordX").value;
+
+                        console.log(email, password);
+
+                        const response = await (fetch("/Auth/Login", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({email, password})
+                        }));
+
+                        const result = await response.json();
+
+                        console.log(result);
+
+                        if (result.success) 
+                        {
+                          document.getElementById("message").innerHTML = `<div class="bg-success p-3">${result.message}</div>`;
+                          setTimeout(() => 
+                            window.location.href = "/Home/Index", 2000
+                          ); 
+                        } else {
+                          document.getElementById("message").innerHTML = `<div class="bg-danger p-3">${result.message}</div>`; 
+                        }
+                      });
+
+                    </script>
 
                     <p class="small pb-lg-2"><a class="text-white-50" href="#!">Forgot password?</a></p>
 

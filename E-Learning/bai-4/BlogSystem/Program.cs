@@ -1,5 +1,6 @@
 using BlogSystem.Data;
 using BlogSystem.Services;
+using BlogSystem.Routers;
 using Microsoft.EntityFrameworkCore;
 using DotNetEnv;
 
@@ -45,8 +46,7 @@ app.UseStaticFiles();
 app.UseRouting();
 app.UseSession();
 
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Auth}/{action=Login}/{id?}");
+// Gọi Index gom tất cả router
+RouteRegistry.MapAllRoutes(app);
 
 app.Run();
