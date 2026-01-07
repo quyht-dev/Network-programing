@@ -33,7 +33,7 @@ public class AuthController : Controller
         // Lưu session
         HttpContext.Session.SetString("USER_ID", user.Id.ToString());
 
-        ViewData["Success"] = "Đăng nhập thành công";
+        ViewData["Success"] = "Đăng nhập thành công. Đang chuyển hướng vui lòng đợi...";
 
         return View();
     }
