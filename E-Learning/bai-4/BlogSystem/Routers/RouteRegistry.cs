@@ -15,6 +15,8 @@ namespace BlogSystem.Routers
 
             AuthRouter.MapAuthRoutes(endpoints);
 
+            ErrorRouter.MapErrorRoutes(endpoints);
+
             // Route mặc định
             endpoints.MapControllerRoute(
                 name: "default",

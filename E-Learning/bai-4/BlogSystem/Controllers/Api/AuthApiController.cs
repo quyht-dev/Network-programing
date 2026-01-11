@@ -11,8 +11,8 @@ namespace BlogSystem.Controllers.Api
     // Model giữ nguyên
     public class LoginRequest
     {
-        public string Email { get; set; }
-        public string Password { get; set; }
+        public required string Email { get; set; }
+        public required string Password { get; set; }
     }
 
     [ApiController]
@@ -69,7 +69,7 @@ namespace BlogSystem.Controllers.Api
         public IActionResult Logout()
         {
             // Với JWT, Server không cần làm gì nhiều, Client tự xóa token là được
-            return Ok(ApiResponse<string>.Ok(null, "Đăng xuất thành công"));
+            return Ok(ApiResponse<string?>.Ok(null, "Đăng xuất thành công"));
         }
 
         // --- HÀM TẠO TOKEN (LOGIC CỐT LÕI) ---

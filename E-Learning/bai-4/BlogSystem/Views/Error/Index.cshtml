@@ -1,0 +1,105 @@
+@{
+    ViewData["Title"] = "404 - Không tìm thấy trang";
+}
+
+<div class="error-page">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 col-md-10 text-center">
+                
+                <!-- 404 Icon/Image -->
+                <div class="error-icon mb-4">
+                    <div class="error-code display-1 fw-bold text-gradient mb-3">
+                        4<span class="text-primary">0</span>4
+                    </div>
+                    <div class="error-image mb-4">
+                        <i class="fas fa-search fa-5x text-muted opacity-50"></i>
+                        <i class="fas fa-exclamation-circle fa-3x text-danger position-relative" 
+                           style="top: -20px; right: -10px;"></i>
+                    </div>
+                </div>
+
+                <!-- Error Message -->
+                <h1 class="display-5 fw-bold mb-4">Trang không tồn tại</h1>
+                <p class="lead text-muted mb-5">
+                    Rất tiếc, trang bạn đang tìm kiếm không tồn tại hoặc đã bị di chuyển.
+                    Vui lòng kiểm tra lại đường dẫn hoặc quay lại trang chủ.
+                </p>
+
+                <!-- Search Form -->
+                <div class="row justify-content-center mb-5">
+                    <div class="col-md-8">
+                        <div class="input-group input-group-lg shadow-sm">
+                            <input type="text" class="form-control border-primary" 
+                                   placeholder="Tìm kiếm nội dung..." 
+                                   id="searchInput">
+                            <button class="btn btn-primary" type="button" id="searchBtn">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="row g-3 justify-content-center">
+                    <div class="col-auto">
+                        <a href="/" class="btn btn-primary btn-lg px-4">
+                            <i class="fas fa-home me-2"></i> Về trang chủ
+                        </a>
+                    </div>
+                    <div class="col-auto">
+                        <a href="/Error" class="btn btn-outline-primary btn-lg px-4">
+                            <i class="fas fa-newspaper me-2"></i> Xem bài viết
+                        </a>
+                    </div>
+                    <div class="col-auto">
+                        <button onclick="window.history.back()" class="btn btn-outline-secondary btn-lg px-4">
+                            <i class="fas fa-arrow-left me-2"></i> Quay lại
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Popular Links -->
+                <div class="mt-5 pt-5 border-top">
+                    <h5 class="mb-4">Có thể bạn quan tâm:</h5>
+                    <div class="row g-3">
+                        <div class="col-md-3 col-6">
+                            <a href="/Error" class="card h-100 text-decoration-none border hover-shadow">
+                                <div class="card-body text-center p-3">
+                                    <i class="fas fa-blog fa-2x text-primary mb-2"></i>
+                                    <h6 class="mb-0">Blog</h6>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <a href="/Error" class="card h-100 text-decoration-none border hover-shadow">
+                                <div class="card-body text-center p-3">
+                                    <i class="fas fa-info-circle fa-2x text-primary mb-2"></i>
+                                    <h6 class="mb-0">Giới thiệu</h6>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <a href="/Error" class="card h-100 text-decoration-none border hover-shadow">
+                                <div class="card-body text-center p-3">
+                                    <i class="fas fa-envelope fa-2x text-primary mb-2"></i>
+                                    <h6 class="mb-0">Liên hệ</h6>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <a href="/Auth/Login" class="card h-100 text-decoration-none border hover-shadow">
+                                <div class="card-body text-center p-3">
+                                    <i class="fas fa-sign-in-alt fa-2x text-primary mb-2"></i>
+                                    <h6 class="mb-0">Đăng nhập</h6>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+

@@ -60,7 +60,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "BlogSystem API", Version = "v1" });
-    
+
     // Cấu hình nút "Authorize" (ổ khóa) trong Swagger để nhập Token
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
@@ -92,7 +92,7 @@ builder.Services.AddCors(options =>
 // 2.5. Đăng ký Services & Session
 builder.Services.AddControllersWithViews(); // Dùng cái này vì bạn có cả Views MVC và API
 builder.Services.AddScoped<AuthService>();
-builder.Services.AddScoped<BlogService>();
+builder.Services.AddScoped<IBlogService, BlogService>();
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30);
