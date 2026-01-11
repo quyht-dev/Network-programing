@@ -1,74 +1,101 @@
 using BlogSystem.Services;
 using Microsoft.AspNetCore.Mvc;
+using BlogSystem.Models.Responses; // Dùng Wrapper chuẩn
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
-namespace BlogSystem.Controllers.Api;
-
-// Model cho request
-public class LoginRequest
+namespace BlogSystem.Controllers.Api
 {
-    public string? Email { get; set; }
-    public string? Password { get; set; }
-}
-
-[ApiController]
-[Route("api/auth")]
-public class AuthApiController : ControllerBase
-{
-    private readonly AuthService _authService;
-
-    public AuthApiController(AuthService authService)
+    // Model giữ nguyên
+    public class LoginRequest
     {
-        _authService = authService;
+        public string Email { get; set; }
+        public string Password { get; set; }
     }
 
-    // POST: api/auth/login
-    [HttpPost("login")]
-    public IActionResult Login([FromBody] LoginRequest request)
+    [ApiController]
+    [Route("api/auth")]
+    public class AuthApiController : ControllerBase
     {
-        if (request.Email == null || request.Password == null)
+        private readonly AuthService _authService;
+        private readonly IConfiguration _configuration; // Cần cái này để đọc JWT_SECRET từ .env
+
+        public AuthApiController(AuthService authService, IConfiguration configuration)
         {
-            return BadRequest(new
-            {
-                success = false,
-                message = "Email hoặc Password rỗng"
-            });
+            _authService = authService;
+            _configuration = configuration;
         }
 
-        var user = _authService.Login(request.Email, request.Password);
-
-        if (user == null)
+        // POST: api/auth/login
+        [HttpPost("login")]
+        public IActionResult Login([FromBody] LoginRequest request)
         {
-            return BadRequest(new
+            // 1. Validate đầu vào
+            if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
             {
-                success = false,
-                message = "Email hoặc mật khẩu sai"
-            });
-        }
-
-        HttpContext.Session.SetString("USER_ID", user.Id.ToString());
-
-        return Ok(new
-        {
-            success = true,
-            message = "Đăng nhập thành công",
-            data = new
-            {
-                userId = user.Id,
-                email = user.Email
+                return BadRequest(ApiResponse<string>.Fail("Email hoặc Password không được để trống"));
             }
-        });
-    }
 
-    // POST: api/auth/logout
-    [HttpPost("logout")]
-    public IActionResult Logout()
-    {
-        HttpContext.Session.Clear();
+            // 2. Gọi Service kiểm tra User trong DB
+            var user = _authService.Login(request.Email, request.Password);
 
-        return Ok(new
+            if (user == null)
+            {
+                return Unauthorized(ApiResponse<string>.Fail("Email hoặc mật khẩu sai"));
+            }
+
+            // 3. QUAN TRỌNG: Tạo JWT Token
+            var tokenString = GenerateJwtToken(user);
+
+            // 4. Trả về Token cho Client (Postman/Frontend)
+            return Ok(new ApiResponse<object>
+            {
+                Success = true,
+                Message = "Đăng nhập thành công",
+                Data = new
+                {
+                    UserId = user.Id,
+                    Email = user.Email,
+                    Role = user.Role,
+                    AccessToken = tokenString // <-- Đây là cái cần lấy
+                }
+            });
+        }
+
+        // POST: api/auth/logout
+        [HttpPost("logout")]
+        public IActionResult Logout()
         {
-            success = true,
-            message = "Đã logout thành công"
-        });
+            // Với JWT, Server không cần làm gì nhiều, Client tự xóa token là được
+            return Ok(ApiResponse<string>.Ok(null, "Đăng xuất thành công"));
+        }
+
+        // --- HÀM TẠO TOKEN (LOGIC CỐT LÕI) ---
+        private string GenerateJwtToken(BlogSystem.Models.Entities.User user)
+        {
+            var jwtSecret = _configuration["JWT_SECRET"];
+            if (string.IsNullOrEmpty(jwtSecret)) throw new Exception("JWT_SECRET chưa cấu hình trong .env");
+
+            var key = Encoding.ASCII.GetBytes(jwtSecret);
+
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new[]
+                {
+                    new Claim("Id", user.Id.ToString()),
+                    new Claim(ClaimTypes.Name, user.Username),
+                    new Claim(ClaimTypes.Email, user.Email),
+                    new Claim(ClaimTypes.Role, user.Role ?? "User")
+                }),
+                Expires = DateTime.UtcNow.AddDays(1), // Token sống 1 ngày
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+            };
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            return tokenHandler.WriteToken(token);
+        }
     }
 }
