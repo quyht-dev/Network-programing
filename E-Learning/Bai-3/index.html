@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Real-time Crypto Dashboard</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; background: #f4f4f4; }
+        #price-card { background: white; padding: 20px; border-radius: 10px; display: inline-block; margin-top: 50px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .price { font-size: 48px; color: #27ae60; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>Bảng giá Bitcoin trực tuyến</h1>
+    <div id="price-card">
+        <div id="time">Chờ kết nối...</div>
+        <div class="price">$<span id="btc-price">0</span></div>
+    </div>
+
+    <script>
+        // 1. Kết nối tới Server WebSocket Python
+        const socket = new WebSocket('ws://localhost:8765');
+
+        // 2. Xử lý khi nhận được dữ liệu
+        socket.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            document.getElementById('btc-price').innerText = data.price;
+            document.getElementById('time').innerText = "Cập nhật lúc: " + data.time;
+        };
+
+        socket.onopen = () => console.log("Đã kết nối Server!");
+        socket.onclose = () => alert("Mất kết nối tới Server!");
+    </script>
+</body>
+</html>
