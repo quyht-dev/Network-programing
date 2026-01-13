@@ -1,14 +1,15 @@
 using BlogSystem.Services;
 using Microsoft.AspNetCore.Mvc;
-using BlogSystem.Models.Responses; // Dùng Wrapper chuẩn
+using BlogSystem.Models.Responses;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 namespace BlogSystem.Controllers.Api
 {
-    // Model giữ nguyên
     public class LoginRequest
     {
         public required string Email { get; set; }
@@ -20,7 +21,7 @@ namespace BlogSystem.Controllers.Api
     public class AuthApiController : ControllerBase
     {
         private readonly AuthService _authService;
-        private readonly IConfiguration _configuration; // Cần cái này để đọc JWT_SECRET từ .env
+        private readonly IConfiguration _configuration;
 
         public AuthApiController(AuthService authService, IConfiguration configuration)
         {
@@ -28,17 +29,14 @@ namespace BlogSystem.Controllers.Api
             _configuration = configuration;
         }
 
-        // POST: api/auth/login
         [HttpPost("login")]
-        public IActionResult Login([FromBody] LoginRequest request)
+        public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
-            // 1. Validate đầu vào
             if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
             {
                 return BadRequest(ApiResponse<string>.Fail("Email hoặc Password không được để trống"));
             }
 
-            // 2. Gọi Service kiểm tra User trong DB
             var user = _authService.Login(request.Email, request.Password);
 
             if (user == null)
@@ -46,10 +44,22 @@ namespace BlogSystem.Controllers.Api
                 return Unauthorized(ApiResponse<string>.Fail("Email hoặc mật khẩu sai"));
             }
 
-            // 3. QUAN TRỌNG: Tạo JWT Token
+            // --- JWT ---
             var tokenString = GenerateJwtToken(user);
 
-            // 4. Trả về Token cho Client (Postman/Frontend)
+            // --- COOKIE AUTH ---
+            var claims = new List<Claim>()
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Role, user.Role ?? "User")
+            };
+
+            var identity = new ClaimsIdentity(claims, "MyCookieAuth");
+            var principal = new ClaimsPrincipal(identity);
+
+            await HttpContext.SignInAsync("MyCookieAuth", principal); // <-- TẠO COOKIE
+
             return Ok(new ApiResponse<object>
             {
                 Success = true,
@@ -59,20 +69,18 @@ namespace BlogSystem.Controllers.Api
                     UserId = user.Id,
                     Email = user.Email,
                     Role = user.Role,
-                    AccessToken = tokenString // <-- Đây là cái cần lấy
+                    AccessToken = tokenString
                 }
             });
         }
 
-        // POST: api/auth/logout
         [HttpPost("logout")]
-        public IActionResult Logout()
+        public async Task<IActionResult> Logout()
         {
-            // Với JWT, Server không cần làm gì nhiều, Client tự xóa token là được
+            await HttpContext.SignOutAsync("MyCookieAuth"); // Xoá cookie
             return Ok(ApiResponse<string?>.Ok(null, "Đăng xuất thành công"));
         }
 
-        // --- HÀM TẠO TOKEN (LOGIC CỐT LÕI) ---
         private string GenerateJwtToken(BlogSystem.Models.Entities.User user)
         {
             var jwtSecret = _configuration["JWT_SECRET"];
@@ -89,13 +97,15 @@ namespace BlogSystem.Controllers.Api
                     new Claim(ClaimTypes.Email, user.Email),
                     new Claim(ClaimTypes.Role, user.Role ?? "User")
                 }),
-                Expires = DateTime.UtcNow.AddDays(1), // Token sống 1 ngày
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+                Expires = DateTime.UtcNow.AddDays(1),
+                SigningCredentials = new SigningCredentials(
+                    new SymmetricSecurityKey(key),
+                    SecurityAlgorithms.HmacSha256Signature
+                )
             };
 
             var tokenHandler = new JwtSecurityTokenHandler();
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            return tokenHandler.WriteToken(token);
+            return tokenHandler.WriteToken(tokenHandler.CreateToken(tokenDescriptor));
         }
     }
 }

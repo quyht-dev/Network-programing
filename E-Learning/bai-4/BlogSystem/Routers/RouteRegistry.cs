@@ -17,6 +17,8 @@ namespace BlogSystem.Routers
 
             ErrorRouter.MapErrorRoutes(endpoints);
 
+            ProfileRouter.MapProfileRoutes(endpoints);
+
             // Route mặc định
             endpoints.MapControllerRoute(
                 name: "default",

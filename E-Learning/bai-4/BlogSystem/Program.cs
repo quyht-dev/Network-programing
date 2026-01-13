@@ -98,6 +98,21 @@ builder.Services.AddSession(options =>
     options.IdleTimeout = TimeSpan.FromMinutes(30);
 });
 
+// 2.6. Đăng ký Cookie
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = "MyCookieAuth";
+    options.DefaultChallengeScheme = "MyCookieAuth";
+})
+.AddCookie("MyCookieAuth", options =>
+{
+    options.LoginPath = "/login";        // Nếu chưa login => chuyển về /login
+    options.AccessDeniedPath = "/403";
+});
+
+builder.Services.AddAuthorization();
+
+
 var app = builder.Build();
 
 // --- PHẦN 3: HTTP REQUEST PIPELINE (MIDDLEWARE) ---

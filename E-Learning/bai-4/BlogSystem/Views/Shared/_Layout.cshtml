@@ -55,7 +55,7 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link text-center @(controller == "Blog" ? "active fw-bold" : "")" 
-                           href="/Error">
+                           href="/">
                             <i class="fas fa-newspaper me-1"></i> Blogs
                         </a>
                     </li>
@@ -75,15 +75,43 @@
                 
                 <!-- Auth buttons -->
                 <div class="d-flex flex-column flex-lg-row gap-2">
-                    <a href="/Auth/Login" 
-                       class="btn btn-outline-light btn-sm d-flex align-items-center justify-content-center">
-                        <i class="fas fa-sign-in-alt me-2"></i> Login
-                    </a>
-                    <a href="/Auth/Register" 
-                       class="btn btn-gradient btn-sm d-flex align-items-center justify-content-center" 
-                       style="background: linear-gradient(90deg, #ff7e5f, #feb47b);">
-                        <i class="fas fa-user-plus me-2"></i> Register
-                    </a>
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <div class="dropdown">
+                            <button class="btn btn-outline-light btn-sm dropdown-toggle d-flex align-items-center" 
+                                    type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-user me-2"></i> My Account
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item" href="/Profile">
+                                        <i class="fas fa-user-circle me-2"></i> Profile
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="/Profile">
+                                        <i class="fas fa-blog me-2"></i> My Blogs
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" href="javascript:void(0)" onclick="logout()">
+                                        <i class="fas fa-sign-out-alt me-2"></i> Logout
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    }
+                    else
+                    {
+                        <a href="/Auth/Login" class="btn btn-outline-light btn-sm d-flex align-items-center justify-content-center">
+                            <i class="fas fa-sign-in-alt me-2"></i> Login
+                        </a>
+                        <a href="/Auth/Register" class="btn btn-gradient btn-sm d-flex align-items-center justify-content-center" 
+                        style="background: linear-gradient(90deg, #ff7e5f, #feb47b);">
+                            <i class="fas fa-user-plus me-2"></i> Register
+                        </a>
+                    }
                 </div>
             </div>
         </div>
@@ -160,7 +188,7 @@
                         <a href="/Error" class="text-light mb-2">
                             <i class="fas fa-key me-2" style="color: #feb47b;"></i> Forgot Password
                         </a>
-                        <a href="/Error" class="text-light mb-2">
+                        <a href="/Profile" class="text-light mb-2">
                             <i class="fas fa-user me-2" style="color: #feb47b;"></i> My Profile
                         </a>
                     </div>
@@ -214,8 +242,11 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     
     <!-- Site JS -->
-    <script type="module" src="/js/home.js"></script>
+    @if (controller == "Home" && action == "Index") {
+        <script type="module" src="/js/home.js"></script>
+    }
     <script type="module" src="/js/404.js"></script>
+    <script type="module" src="/js/profile.js"></script>
     
     <!-- Add sticky navbar effect -->
     <script>
