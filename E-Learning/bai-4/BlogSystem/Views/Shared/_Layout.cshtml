@@ -3,6 +3,9 @@
     var title = ViewData["Title"] ?? "Blog System";
     var controller = ViewContext?.RouteData?.Values["controller"]?.ToString();
     var action = ViewContext?.RouteData?.Values["action"]?.ToString();
+
+    @* Lấy data cookie *@
+    
 }
 
 <!DOCTYPE html>
@@ -89,13 +92,13 @@
                                     </a>
                                 </li>
                                 <li>
-                                    <a class="dropdown-item" href="/Profile">
-                                        <i class="fas fa-blog me-2"></i> My Blogs
+                                    <a class="dropdown-item" href="/">
+                                        <i class="fas fa-blog me-2"></i> Blogs
                                     </a>
                                 </li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
-                                    <a class="dropdown-item" href="javascript:void(0)" onclick="logout()">
+                                    <a class="dropdown-item" onclick="logout()">
                                         <i class="fas fa-sign-out-alt me-2"></i> Logout
                                     </a>
                                 </li>
@@ -245,11 +248,33 @@
     @if (controller == "Home" && action == "Index") {
         <script type="module" src="/js/home.js"></script>
     }
-    <script type="module" src="/js/404.js"></script>
-    <script type="module" src="/js/profile.js"></script>
+
+    @if (controller == "Error" && action == "Index") {
+        <script type="module" src="/js/404.js"></script>
+    }
     
     <!-- Add sticky navbar effect -->
     <script>
+        // Logout
+        async function logout() {
+            sessionStorage.clear();
+
+            try {
+                const response = await fetch("api/auth/logout", {
+                method: "POST"
+                });
+
+                const data = await response.json();
+
+                alert(data.message);
+
+            } catch(err) {
+                console.error("Error: " + err.message);
+            }
+
+            window.location.href = `/home/index`;
+        }
+
         window.addEventListener('scroll', function() {
             const navbar = document.querySelector('.sticky-nav');
             if (window.scrollY > 50) {
@@ -271,9 +296,5 @@
             });
         });
     </script>
-    
-    @if (controller == "Auth" && action == "Login") {
-        <script src="/js/login.js"></script>
-    }
 </body>
 </html>

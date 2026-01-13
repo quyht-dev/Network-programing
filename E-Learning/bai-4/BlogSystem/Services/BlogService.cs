@@ -27,6 +27,20 @@ namespace BlogSystem.Services
             return query.ToList();
         }
 
+        public List<Blog> GetBlogsPersonal(long? userId, string? keyword, string? sort)
+        {
+            var query = _db.Blogs.Where(b => !b.IsDeleted && b.AuthorId == userId).AsQueryable();
+
+            if (!string.IsNullOrEmpty(keyword))
+                query = query.Where(b => b.Title.Contains(keyword));
+
+            query = sort == "oldest"
+                ? query.OrderBy(b => b.CreatedAt)
+                : query.OrderByDescending(b => b.CreatedAt);
+
+            return query.ToList();
+        }
+
         public Blog? GetBlogById(long id)
         {
             return _db.Blogs.FirstOrDefault(b => b.Id == id && !b.IsDeleted);

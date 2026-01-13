@@ -58,7 +58,10 @@ namespace BlogSystem.Controllers.Api
             var identity = new ClaimsIdentity(claims, "MyCookieAuth");
             var principal = new ClaimsPrincipal(identity);
 
-            await HttpContext.SignInAsync("MyCookieAuth", principal); // <-- TẠO COOKIE
+            await HttpContext.SignInAsync("MyCookieAuth", principal, new AuthenticationProperties
+            {
+                IsPersistent = false   // Cookie session
+            });
 
             return Ok(new ApiResponse<object>
             {

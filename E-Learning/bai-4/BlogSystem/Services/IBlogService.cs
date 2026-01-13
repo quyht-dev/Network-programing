@@ -10,5 +10,6 @@ namespace BlogSystem.Services
         Blog? UpdateBlog(long id, UpdateBlogDto request);
         bool DeleteBlog(long id);
         Blog? GetBlogById(long id);
+        List<Blog> GetBlogsPersonal(long? userId, string? keyword, string? sort);
     }
 }

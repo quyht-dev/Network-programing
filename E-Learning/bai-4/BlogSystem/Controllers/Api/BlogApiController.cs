@@ -4,6 +4,7 @@ using BlogSystem.Models.DTOs;
 using BlogSystem.Models.Responses;
 using BlogSystem.Services;
 using System.IO;
+using System.Net;
 
 namespace BlogSystem.Controllers.Api
 {
@@ -29,8 +30,17 @@ namespace BlogSystem.Controllers.Api
         }
 
         // POST
+        [HttpPost("personal")]
+        [Authorize(AuthenticationSchemes = "MyCookieAuth")]
+        public IActionResult GetBlogsPersonal([FromBody] GetBlogsPersonalDto request, [FromQuery] string? keyword, [FromQuery] string? sort)
+        {
+            var blogs = _blogService.GetBlogsPersonal(request.userId, keyword, sort);
+            return Ok(ApiResponse<object?>.Ok(blogs));
+        }
+
+        // POST
         [HttpPost]
-        [Authorize]
+        [Authorize(AuthenticationSchemes = "MyCookieAuth")]
         public IActionResult CreateBlog([FromForm] CreateBlogDto request)
         {
             string? thumbnailPath = null;
@@ -55,7 +65,7 @@ namespace BlogSystem.Controllers.Api
 
         // PUT
         [HttpPut("{id}")]
-        [Authorize]
+        [Authorize(AuthenticationSchemes = "MyCookieAuth")]
         public IActionResult UpdateBlog(long id, [FromBody] UpdateBlogDto request)
         {
             var blog = _blogService.UpdateBlog(id, request);
@@ -67,7 +77,7 @@ namespace BlogSystem.Controllers.Api
 
         // DELETE
         [HttpDelete("{id}")]
-        [Authorize]
+        [Authorize(AuthenticationSchemes = "MyCookieAuth")]
         public IActionResult DeleteBlog(long id)
         {
             var success = _blogService.DeleteBlog(id);

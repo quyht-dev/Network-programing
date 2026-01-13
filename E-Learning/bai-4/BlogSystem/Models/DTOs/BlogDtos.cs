@@ -16,4 +16,9 @@ namespace BlogSystem.Models.DTOs
         public required string Title { get; set; }
         public required string Content { get; set; }
     }
+
+    public class GetBlogsPersonalDto
+    {
+        public long userId { get; set; }
+    }
 }
