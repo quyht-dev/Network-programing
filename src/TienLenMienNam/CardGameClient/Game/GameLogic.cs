@@ -34,7 +34,7 @@ namespace CardGameClient.Game
             _ui = ui;
 
             // --- CẤU HÌNH KẾT NỐI ---
-            // LƯU Ý: Nếu tắt Ngrok bật lại, bạn phải cập nhật link này!
+            // Nếu tắt Ngrok bật lại, nhớ cập nhật link này!
             ServerUrl = "https://jayda-sulfuric-medially.ngrok-free.dev/gameHub";
             
             PlayerName = "Player";
@@ -141,8 +141,7 @@ namespace CardGameClient.Game
         {
             if (!IsConnected) return;
 
-            // --- SỬA LỖI 1: Gọi đúng tên hàm "Join" và tách tham số ---
-            // Server: public async Task Join(string name, string roomId)
+            // Gọi đúng tên hàm "Join" và tách tham số
             await _client.SendAsync("Join", PlayerName, RoomId);
 
             IsInRoom = true;
@@ -165,11 +164,10 @@ namespace CardGameClient.Game
             var selected = Hand.Where(h => h.IsSelected).Select(h => h.Card).ToList();
             if (selected.Count == 0) return;
 
-            // --- SỬA LỖI 2: Gọi đúng tên hàm "Play" và chuyển sang mảng String ---
-            // Server: public async Task Play(string[] cards)
+            // Gọi đúng tên hàm "Play" và chuyển sang mảng String
             string[] cardCodes = selected.Select(c => c.ToCode()).ToArray();
 
-            await _client.SendAsync("Play", (object)cardCodes); // Ép kiểu object để gọi hàm SendAsync chuẩn
+            await _client.SendAsync("Play", (object)cardCodes);
             
             Log("Sent Play: " + string.Join(", ", cardCodes));
             ClearSelection();
@@ -179,8 +177,7 @@ namespace CardGameClient.Game
         {
             if (!CanPass) return;
             
-            // --- SỬA LỖI 3: Gọi đúng tên hàm "Pass" ---
-            // Server: public async Task Pass()
+            // Gọi đúng tên hàm "Pass"
             await _client.SendAsync("Pass");
             Log("Sent Pass");
         }
@@ -191,7 +188,7 @@ namespace CardGameClient.Game
             ResetUiOnDisconnect("Disconnected");
         }
 
-        // ===== Logic chọn bài (Giữ nguyên) =====
+        // ===== Logic chọn bài =====
         public void ToggleSelect(CardViewModel vm)
         {
             vm.IsSelected = !vm.IsSelected;
@@ -208,7 +205,7 @@ namespace CardGameClient.Game
             UpdateActionFlags();
         }
 
-        // ===== Xử lý sự kiện từ Server (Giữ nguyên logic nhận) =====
+        // ===== Xử lý sự kiện từ Server (ĐÃ SỬA LỖI HIỂN THỊ TẠI ĐÂY) =====
         
         private void OnEventReceived(string eventName, object payload)
         {
@@ -216,7 +213,15 @@ namespace CardGameClient.Game
             {
                 try 
                 {
-                    JToken json = payload != null ? JToken.FromObject(payload) : null;
+                    JToken json = null;
+                    if (payload != null)
+                    {
+                        // --- SỬA LỖI QUAN TRỌNG ---
+                        // Chuyển đổi object (System.Text.Json) sang chuỗi JSON rồi parse lại bằng Newtonsoft
+                        string jsonStr = System.Text.Json.JsonSerializer.Serialize(payload);
+                        json = JToken.Parse(jsonStr);
+                    }
+                    
                     HandleSignalREvent(eventName, json);
                 }
                 catch (Exception ex)
@@ -265,7 +270,7 @@ namespace CardGameClient.Game
             }
         }
 
-        // ===== Logic tái tạo bàn chơi (Giữ nguyên) =====
+        // ===== Logic tái tạo bàn chơi =====
         private void ApplyState(JObject payload)
         {
             if (payload == null) return;
