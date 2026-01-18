@@ -1,6 +1,9 @@
 using System;
+using System.Linq;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using CardGameServer.Game;
+using CardGameServer.Models;
 using Microsoft.AspNetCore.SignalR;
 using Newtonsoft.Json.Linq;
 
@@ -26,16 +29,11 @@ namespace CardGameServer.Network
                     Guid.NewGuid().ToString("N"),
                     Clients.Caller
                 );
-
                 _connectionManager.AddSession(session);
                 session.SendWelcome();
-
                 await base.OnConnectedAsync();
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"OnConnected error: {ex.Message}");
-            }
+            catch (Exception ex) { Console.WriteLine($"OnConnected error: {ex.Message}"); }
         }
 
         public override async Task OnDisconnectedAsync(Exception? exception)
@@ -48,26 +46,16 @@ namespace CardGameServer.Network
                     _engine.OnDisconnected(session);
                     _connectionManager.RemoveSession(Context.ConnectionId);
                 }
-
                 await base.OnDisconnectedAsync(exception);
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"OnDisconnected error: {ex.Message}");
-            }
+            catch (Exception ex) { Console.WriteLine($"OnDisconnected error: {ex.Message}"); }
         }
 
-        // Client methods
         public async Task Join(string name, string roomId)
         {
             var session = _connectionManager.GetSession(Context.ConnectionId);
             if (session == null) return;
-
-            var msg = new NetMessage
-            {
-                Type = "join",
-                Payload = JObject.FromObject(new { name, roomId })
-            };
+            var msg = new NetMessage { Type = "join", Payload = JObject.FromObject(new { name, roomId }) };
             _engine.HandleMessage(session, msg);
         }
 
@@ -75,25 +63,57 @@ namespace CardGameServer.Network
         {
             var session = _connectionManager.GetSession(Context.ConnectionId);
             if (session == null) return;
-
-            var msg = new NetMessage
-            {
-                Type = "ready",
-                Payload = JObject.FromObject(new { ready })
-            };
+            var msg = new NetMessage { Type = "ready", Payload = JObject.FromObject(new { ready }) };
             _engine.HandleMessage(session, msg);
         }
 
+        // --- HÀM PLAY ĐÃ SỬA LỖI ---
         public async Task Play(string[] cards)
         {
             var session = _connectionManager.GetSession(Context.ConnectionId);
             if (session == null) return;
 
-            var msg = new NetMessage
+            // 1. Lấy thông tin phòng
+            // (Lúc này GameEngine.GetRoom đã được sửa ở trên nên gọi an toàn)
+            var room = _engine.GetRoom(session.PlayerId); 
+            
+            if (room != null)
             {
-                Type = "play",
-                Payload = JObject.FromObject(new { cards })
-            };
+                var playCards = cards.Select(code => Card.FromCode(code)).ToList();
+                var currentTrickMove = room.CurrentTrick; // Đây là đối tượng Move
+
+                bool isValid = false;
+
+                // TRƯỜNG HỢP 1: Bàn trống
+                if (currentTrickMove == null)
+                {
+                    // SỬA LỖI: Thêm (playCards) vào
+                    if (CardHelper.GetHandType(playCards) != HandType.None)
+                    {
+                        isValid = true;
+                    }
+                }
+                // TRƯỜNG HỢP 2: Đè bài
+                else
+                {
+                    // SỬA LỖI: Truy cập vào thuộc tính Cards của Move (giả sử tên là Cards)
+                    // Nếu trong Move bạn đặt tên là PlayCards thì sửa thành .PlayCards
+                    var cardsOnTable = currentTrickMove.Cards; 
+                    
+                    if (cardsOnTable != null)
+                    {
+                        isValid = CardHelper.CanBeat(cardsOnTable, playCards);
+                    }
+                }
+
+                if (!isValid)
+                {
+                    await Clients.Caller.SendAsync("Error", "Bài không hợp lệ hoặc không chặt được!");
+                    return; 
+                }
+            }
+
+            var msg = new NetMessage { Type = "play", Payload = JObject.FromObject(new { cards }) };
             _engine.HandleMessage(session, msg);
         }
 
@@ -101,11 +121,7 @@ namespace CardGameServer.Network
         {
             var session = _connectionManager.GetSession(Context.ConnectionId);
             if (session == null) return;
-
-            var msg = new NetMessage
-            {
-                Type = "pass"
-            };
+            var msg = new NetMessage { Type = "pass" };
             _engine.HandleMessage(session, msg);
         }
 
@@ -113,12 +129,7 @@ namespace CardGameServer.Network
         {
             var session = _connectionManager.GetSession(Context.ConnectionId);
             if (session == null) return;
-
-            var msg = new NetMessage
-            {
-                Type = "chat",
-                Payload = JObject.FromObject(new { text })
-            };
+            var msg = new NetMessage { Type = "chat", Payload = JObject.FromObject(new { text }) };
             _engine.HandleMessage(session, msg);
         }
 
@@ -126,12 +137,7 @@ namespace CardGameServer.Network
         {
             var session = _connectionManager.GetSession(Context.ConnectionId);
             if (session == null) return;
-
-            var msg = new NetMessage
-            {
-                Type = "ping",
-                Payload = payload
-            };
+            var msg = new NetMessage { Type = "ping", Payload = payload };
             _engine.HandleMessage(session, msg);
         }
     }
