@@ -30,7 +30,6 @@ namespace CardGameClient.Game
 
         public string Display => $"{Name} ({HandCount})";
 
-        // Hàm hỗ trợ so sánh cho thuật toán Smart Update
         public bool Equals(PlayerInfoVM other) => other != null && PlayerId == other.PlayerId;
     }
 
@@ -43,7 +42,6 @@ namespace CardGameClient.Game
         private readonly GameClient _client = new GameClient();
 
         // --- CẤU HÌNH SERVER ---
-        // Lưu ý: Nếu chạy Localhost thì dùng http://localhost:5xxx/gameHub
         public string ServerUrl { get; set; } = "https://jayda-sulfuric-medially.ngrok-free.dev/gameHub"; 
         public string PlayerName { get; set; } = "Player";
         public string RoomId { get; set; } = "ROOM-1";
@@ -57,7 +55,7 @@ namespace CardGameClient.Game
             _client.Disconnected += OnDisconnected;
         }
 
-        // --- VỊ TRÍ NGỒI (BÀN TRÒN) ---
+        // --- VỊ TRÍ NGỒI ---
         private PlayerInfoVM _playerLeft;
         public PlayerInfoVM PlayerLeft { get => _playerLeft; private set { _playerLeft = value; Raise(); } }
 
@@ -83,6 +81,13 @@ namespace CardGameClient.Game
         private string _serverInfoText;
         public string ServerInfoText { get => _serverInfoText; private set { _serverInfoText = value; Raise(); } }
 
+        // --- TÍNH NĂNG RESET GAME ---
+        private bool _showResetAlert;
+        public bool ShowResetAlert { get => _showResetAlert; set { _showResetAlert = value; Raise(); } }
+
+        private string _resetRequesterName;
+        public string ResetRequesterName { get => _resetRequesterName; set { _resetRequesterName = value; Raise(); } }
+
         // --- TRẠNG THÁI GAME ---
         private string _myPlayerId;
         public string MyPlayerId { get => _myPlayerId; private set { _myPlayerId = value; Raise(); UpdateActionFlags(); UpdateSeating(); } }
@@ -93,7 +98,10 @@ namespace CardGameClient.Game
         private string _currentTurnPlayerId;
         private bool _tableHasTrick;
 
-        // --- DỮ LIỆU (COLLECTIONS) ---
+        // Biến theo dõi trạng thái cũ để kích hoạt đếm ngược
+        private string _lastPhase = "Lobby"; 
+
+        // --- DỮ LIỆU ---
         public ObservableCollection<PlayerInfoVM> Players { get; } = new ObservableCollection<PlayerInfoVM>();
         public ObservableCollection<CardViewModel> Hand { get; } = new ObservableCollection<CardViewModel>();
         public ObservableCollection<string> TableCards { get; } = new ObservableCollection<string>();
@@ -112,7 +120,7 @@ namespace CardGameClient.Game
         public string HintText { get => _hintText; private set { _hintText = value; Raise(); } }
 
         // =========================================================
-        // PHẦN 3: XỬ LÝ MẠNG & SỰ KIỆN (NETWORK HANDLING)
+        // PHẦN 3: XỬ LÝ MẠNG & SỰ KIỆN
         // =========================================================
         private void OnEventReceived(string eventName, object payload)
         {
@@ -153,11 +161,28 @@ namespace CardGameClient.Game
                 case "Error":
                     StatusText = $"Lỗi: {data}";
                     break;
+
+                case "ask_reset":
+                    ResetRequesterName = data.Value<string>("requester");
+                    ShowResetAlert = true; 
+                    break;
+
+                case "game_reset":
+                    ShowResetAlert = false;
+                    TableCards.Clear();
+                    Hand.Clear();
+                    _tableHasTrick = false;
+                    AmIReady = false;
+                    ShowCountdown = false;
+                    _lastPhase = "Lobby"; // Reset phase về Lobby
+                    StatusText = "Ván mới - Hãy Sẵn Sàng";
+                    UpdateActionFlags();
+                    break;
             }
         }
 
         // =========================================================
-        // PHẦN 4: LOGIC ĐỒNG BỘ TRẠNG THÁI (SMART STATE SYNC)
+        // PHẦN 4: LOGIC ĐỒNG BỘ TRẠNG THÁI
         // =========================================================
         private void ApplyState(JObject payload)
         {
@@ -168,10 +193,20 @@ namespace CardGameClient.Game
 
             if (pub != null)
             {
-                // 1. Cập nhật lượt (QUAN TRỌNG: Để biết ai đánh tiếp theo)
+                // --- [MỚI] LOGIC KÍCH HOẠT ĐẾM NGƯỢC ---
+                string currentPhase = pub.Value<string>("phase"); // "Lobby", "Playing", "Finished"
+                
+                // Nếu trước đó là Lobby (đang chờ) mà giờ chuyển sang Playing (đang chơi) -> Bắt đầu game
+                if (_lastPhase == "Lobby" && currentPhase == "Playing")
+                {
+                    TriggerGameStartCountdown();
+                }
+                _lastPhase = currentPhase; 
+                // ---------------------------------------
+
                 _currentTurnPlayerId = pub.Value<string>("currentTurn");
 
-                // 2. CẬP NHẬT BÀI TRÊN BÀN (FIX LỖI BÀI BIẾN MẤT)
+                // Cập nhật bài trên bàn
                 var trick = pub["currentTrick"] as JObject;
                 List<string> incomingTable = new List<string>();
                 if (trick != null)
@@ -180,23 +215,17 @@ namespace CardGameClient.Game
                     if (arr != null) foreach (var t in arr) incomingTable.Add(t.ToString());
                 }
                 
-                // LOGIC: Chỉ thay đổi bài trên bàn khi có bài mới đánh ra.
-                // Nếu Server báo hết vòng (incomingTable rỗng), ta KHÔNG xóa bài cũ ngay
-                // để người chơi kịp nhìn thấy bài vừa đánh.
                 if (incomingTable.Count > 0)
                 {
-                    // Dùng SyncCollection để cập nhật mượt mà
                     SyncCollection(TableCards, incomingTable, (code) => code, (a, b) => a == b);
                     _tableHasTrick = true;
                 }
                 else
                 {
-                    // Bàn rỗng (Hết vòng) -> Giữ nguyên ảnh bài cũ (Không Clear)
-                    // Chỉ cập nhật trạng thái là hết vòng để ẩn nút Bỏ Lượt
                     _tableHasTrick = false;
                 }
 
-                // 3. Cập nhật người chơi (Dùng SyncCollection để không nháy hình)
+                // Cập nhật người chơi
                 var parr = pub["players"] as JArray;
                 if (parr != null)
                 {
@@ -210,11 +239,9 @@ namespace CardGameClient.Game
                             Name = p.Value<string>("name") ?? "Unknown",
                             Ready = p.Value<bool?>("ready") ?? false,
                             HandCount = p.Value<int?>("handCount") ?? 0,
-                            // Tự động bật đèn (IsTurn=True) nếu trùng ID lượt đánh
-                            IsTurn = (pid == _currentTurnPlayerId) 
+                            IsTurn = (pid == _currentTurnPlayerId)
                         });
                         
-                        // Cập nhật trạng thái của chính mình
                         if (pid == MyPlayerId) AmIReady = p.Value<bool?>("ready") ?? false;
                     }
 
@@ -222,7 +249,6 @@ namespace CardGameClient.Game
                         (vm) => vm, 
                         (oldItem, newItem) => oldItem.PlayerId == newItem.PlayerId,
                         (oldItem, newItem) => {
-                            // Cập nhật thuộc tính (Property) thay vì thay thế object
                             oldItem.Name = newItem.Name;
                             oldItem.Ready = newItem.Ready;
                             oldItem.HandCount = newItem.HandCount;
@@ -232,12 +258,12 @@ namespace CardGameClient.Game
                 }
                 UpdateSeating();
 
-                // 4. Xử lý Thắng/Thua (Lúc này mới xóa bàn sạch sẽ)
+                // Thông báo trạng thái
                 var winner = pub.Value<string>("winner");
                 if (!string.IsNullOrEmpty(winner)) 
                 {
                     StatusText = $"CHIẾN THẮNG: {DisplayNameOf(winner)}";
-                    TableCards.Clear(); // Ván mới -> Xóa sạch bàn
+                    TableCards.Clear(); 
                 }
                 else if (pub.Value<string>("phase") == "Playing") 
                 {
@@ -249,29 +275,24 @@ namespace CardGameClient.Game
                 }
             }
 
-            // 5. CẬP NHẬT BÀI TRÊN TAY (FIX LỖI XOAY LẠI TỪ ĐẦU)
             if (per != null)
             {
                 var handArr = per["yourHand"] as JArray;
                 if (handArr != null)
                 {
-                    // Lấy list code bài mới
                     List<string> newCodes = new List<string>();
                     foreach (var t in handArr)
                         newCodes.Add(t.Type == JTokenType.String ? t.ToString() : (t["code"]?.ToString() ?? ""));
 
-                    // Sắp xếp bài để hiển thị đẹp
                     var sortedCodes = newCodes
                         .Select(c => Card.FromCode(c))
                         .OrderBy(c => c.Power)
                         .Select(c => c.ToCode())
                         .ToList();
 
-                    // Dùng SyncCollection: Chỉ Xóa lá đã đánh, Thêm lá mới bốc.
-                    // Các lá cũ giữ nguyên -> Animation không bị reset.
                     SyncCollection(Hand, sortedCodes,
-                        (code) => new CardViewModel(Card.FromCode(code)), // Hàm tạo mới
-                        (vm, code) => vm.Card.ToCode() == code // Hàm so sánh
+                        (code) => new CardViewModel(Card.FromCode(code)),
+                        (vm, code) => vm.Card.ToCode() == code
                     );
 
                     HasSelection = Hand.Any(x => x.IsSelected);
@@ -282,13 +303,14 @@ namespace CardGameClient.Game
             UpdateActionFlags();
         }
 
-        // =========================================================
-        // PHẦN 5: THUẬT TOÁN ĐỒNG BỘ THÔNG MINH (CORE FIX)
-        // =========================================================
-        /// <summary>
-        /// Hàm này giúp đồng bộ 2 danh sách mà không xóa toàn bộ (Clear).
-        /// Nó giữ lại các phần tử cũ để Animation không bị mất.
-        /// </summary>
+        // --- HÀM BẬT ĐẾM NGƯỢC ---
+        private async void TriggerGameStartCountdown()
+        {
+            ShowCountdown = true;
+            await Task.Delay(4000); // Chờ 4 giây (3-2-1-Start trong XAML)
+            ShowCountdown = false;
+        }
+
         private void SyncCollection<TVM, TData>(
             ObservableCollection<TVM> currentList, 
             List<TData> newList, 
@@ -296,16 +318,12 @@ namespace CardGameClient.Game
             Func<TVM, TData, bool> comparer,
             Action<TVM, TData> updater = null)
         {
-            // 1. Xóa phần tử thừa (Có trong Cũ nhưng không có trong Mới)
             for (int i = currentList.Count - 1; i >= 0; i--)
             {
                 if (!newList.Any(data => comparer(currentList[i], data)))
-                {
                     currentList.RemoveAt(i);
-                }
             }
 
-            // 2. Thêm hoặc Cập nhật phần tử mới
             for (int i = 0; i < newList.Count; i++)
             {
                 var data = newList[i];
@@ -313,25 +331,21 @@ namespace CardGameClient.Game
 
                 if (existingItem == null)
                 {
-                    // Chưa có -> Thêm mới vào đúng vị trí
                     var newItem = creator(data);
                     if (currentList.Count > i) currentList.Insert(i, newItem);
                     else currentList.Add(newItem);
                 }
                 else
                 {
-                    // Đã có -> Kiểm tra vị trí
                     int oldIndex = currentList.IndexOf(existingItem);
-                    if (oldIndex != i) currentList.Move(oldIndex, i); // Di chuyển về đúng chỗ
-                    
-                    // Cập nhật dữ liệu bên trong (nếu cần)
+                    if (oldIndex != i) currentList.Move(oldIndex, i);
                     updater?.Invoke(existingItem, data);
                 }
             }
         }
 
         // =========================================================
-        // PHẦN 6: CÁC CHỨC NĂNG PHỤ TRỢ (HELPERS)
+        // PHẦN 6: HELPERS
         // =========================================================
         private void UpdateSeating()
         {
@@ -363,14 +377,12 @@ namespace CardGameClient.Game
             HintText = AnalyzeHand(selected);
         }
 
-        // Bộ não phân tích luật (Hiển thị tên bộ bài)
         private string AnalyzeHand(List<Card> cards)
         {
             var sorted = cards.OrderBy(c => c.Power).ToList();
             int n = sorted.Count;
             if (n == 0) return "";
 
-            // Check bộ giống nhau
             if (sorted.All(c => c.Rank == sorted[0].Rank))
             {
                 if (n == 1) return "Rác (Lẻ)";
@@ -379,7 +391,6 @@ namespace CardGameClient.Game
                 if (n == 4) return "Tứ Quý (Bomb)";
             }
 
-            // Check Sảnh (Liên tiếp & Không chứa 2)
             bool has2 = sorted.Any(c => c.Rank == 15);
             bool isStraight = true;
             for (int i = 0; i < n - 1; i++) 
@@ -387,7 +398,6 @@ namespace CardGameClient.Game
             
             if (isStraight && !has2 && n >= 3) return $"Sảnh {n} lá";
 
-            // Check Đôi Thông (Chẵn, >=6, liên tiếp)
             if (n >= 6 && n % 2 == 0 && !has2)
             {
                 bool isPine = true;
@@ -404,21 +414,24 @@ namespace CardGameClient.Game
         private void ResetUiOnDisconnect(string msg)
         {
             IsConnected = false; IsInRoom = false; Players.Clear(); Hand.Clear(); TableCards.Clear();
-            StatusText = msg; ShowCountdown = false;
+            StatusText = msg; ShowCountdown = false; ShowResetAlert = false;
         }
 
         // =========================================================
         // PHẦN 7: GIAO TIẾP SERVER (ACTIONS)
         // =========================================================
         public async Task ConnectAsync() { if (!IsConnected) { StatusText="Đang kết nối..."; await _client.ConnectAsync(ServerUrl); IsConnected=true; StatusText="Đã kết nối"; } }
+        
         public async Task JoinAsync() { 
             if (IsConnected) { 
                 await _client.SendAsync("Join", PlayerName, RoomId); 
                 IsInRoom = true; 
-                ShowCountdown = true; await Task.Delay(4000); ShowCountdown = false; // Đếm ngược
+                // ĐÃ XÓA ĐẾM NGƯỢC Ở ĐÂY -> CHUYỂN SANG ApplyState
             } 
         }
+        
         public async Task ReadyAsync(bool r) { if (IsConnected) await _client.SendAsync("Ready", !AmIReady); }
+        
         public async Task PlaySelectedAsync() {
             if (CanPlay) {
                 var codes = Hand.Where(h=>h.IsSelected).Select(h=>h.Card.ToCode()).ToArray();
@@ -426,8 +439,27 @@ namespace CardGameClient.Game
                 ClearSelection();
             }
         }
+        
         public async Task PassAsync() { if (CanPass) await _client.SendAsync("Pass"); }
+        
         public async Task Disconnect() { await _client.DisconnectAsync(); ResetUiOnDisconnect("Đã thoát"); }
+
+        // --- CÁC HÀM RESET GAME ---
+        public async Task SendRequestReset()
+        {
+            if (IsConnected) await _client.SendAsync("RequestReset");
+        }
+
+        public async Task SendAcceptReset()
+        {
+            ShowResetAlert = false; 
+            if (IsConnected) await _client.SendAsync("AcceptReset");
+        }
+
+        public void CloseResetAlert()
+        {
+            ShowResetAlert = false; 
+        }
         
         public void ToggleSelect(CardViewModel vm) { vm.IsSelected = !vm.IsSelected; HasSelection = Hand.Any(x => x.IsSelected); UpdateHint(); UpdateActionFlags(); }
         public void ClearSelection() { foreach (var c in Hand) c.IsSelected = false; HasSelection = false; UpdateHint(); UpdateActionFlags(); }

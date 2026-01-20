@@ -1,5 +1,4 @@
-﻿// CardGameServer/Game/GameRoom.cs
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using CardGameServer.Models;
@@ -69,10 +68,49 @@ namespace CardGameServer.Game
         // Kết quả
         public string WinnerPlayerId { get; private set; }
 
+        // --- BIẾN QUAN TRỌNG: ĐÁNH DẤU VÁN ĐẦU TIÊN ---
+        public bool IsFirstGame { get; set; } = true; 
+
         public GameRoom(string roomId)
         {
             RoomId = roomId;
             Phase = RoomPhase.Lobby;
+        }
+
+        // --- HÀM RESET GAME ---
+        public void ResetGame()
+        {
+            lock (_gate)
+            {
+                // 1. Đưa về sảnh chờ
+                Phase = RoomPhase.Lobby;
+                
+                // 2. Xóa dữ liệu ván đấu
+                CurrentTrick = null;
+                PassCount = 0;
+                WinnerPlayerId = null;
+                LastPlayedByPlayerId = null;
+                CurrentTurnPlayerId = null;
+                
+                // 3. QUAN TRỌNG: Reset xong thì ván kế tiếp lại là Ván Đầu Tiên (Bắt buộc 3 bích)
+                IsFirstGame = true; 
+
+                // 4. Reset trạng thái người chơi
+                foreach (var p in _players)
+                {
+                    if (_hands.ContainsKey(p.PlayerId)) _hands[p.PlayerId].Clear();
+                    if (_ready.ContainsKey(p.PlayerId)) _ready[p.PlayerId] = false;
+                }
+            }
+        }
+
+        // --- HÀM HỖ TRỢ GAME ENGINE ---
+        public bool HasPlayer(string playerId)
+        {
+            lock (_gate)
+            {
+                return _players.Any(p => p.PlayerId == playerId);
+            }
         }
 
         public List<IPlayerSession> SnapshotPlayers()
@@ -131,7 +169,6 @@ namespace CardGameServer.Game
 
                 if (Phase == RoomPhase.Playing)
                 {
-                    // đơn giản: có người rời khi đang chơi => kết thúc ván
                     Phase = RoomPhase.Finished;
                 }
             }
@@ -193,7 +230,9 @@ namespace CardGameServer.Game
                 foreach (var p in _players)
                     _hands[p.PlayerId] = deck.Draw(13);
 
-                // Tìm người có 3 bích (3S) đi trước
+                // Nếu là ván đầu tiên (IsFirstGame=true), tìm người có 3 Bích đi trước
+                // Nếu không (Ván 2 trở đi), người thắng ván trước đi trước (Logic này chưa cài, mặc định 3 bích tiếp)
+                // Để đơn giản cho đồ án: Luôn tìm 3 bích đi trước
                 var threeSpades = new Card(3, Suit.Spades);
                 string first = _players[0].PlayerId;
 
@@ -225,6 +264,7 @@ namespace CardGameServer.Game
             }
         }
 
+        // --- HÀM PLAY ĐÃ SỬA LỖI LOGIC ---
         public bool Play(IPlayerSession s, List<Card> cards, out string error, out string info)
         {
             error = null;
@@ -250,7 +290,6 @@ namespace CardGameServer.Game
                 }
 
                 var hand = _hands[s.PlayerId];
-                // check cards belong to hand
                 foreach (var c in cards)
                 {
                     bool found = hand.Any(h => h.Rank == c.Rank && h.Suit == c.Suit);
@@ -268,7 +307,7 @@ namespace CardGameServer.Game
                     return false;
                 }
 
-                // nếu bàn đang có bài thì phải chặn được
+                // Nếu bàn đang có bài thì phải chặn được
                 if (CurrentTrick != null)
                 {
                     if (!Beats(move, CurrentTrick))
@@ -278,7 +317,12 @@ namespace CardGameServer.Game
                     }
                 }
 
-                // apply: remove cards from hand
+                // --- SỬA LỖI Ở ĐÂY: TẮT CỜ VÁN ĐẦU TIÊN ---
+                // Sau khi đánh thành công nước bài bất kỳ, luật "bắt buộc 3 bích" sẽ hết hiệu lực
+                IsFirstGame = false;
+                // ------------------------------------------
+
+                // Trừ bài trên tay
                 foreach (var c in cards)
                 {
                     var idx = hand.FindIndex(h => h.Rank == c.Rank && h.Suit == c.Suit);
@@ -289,7 +333,7 @@ namespace CardGameServer.Game
                 LastPlayedByPlayerId = s.PlayerId;
                 PassCount = 0;
 
-                // thắng nếu hết bài
+                // Kiểm tra thắng
                 if (hand.Count == 0)
                 {
                     Phase = RoomPhase.Finished;
@@ -298,7 +342,6 @@ namespace CardGameServer.Game
                 }
                 else
                 {
-                    // chuyển lượt sang người kế tiếp
                     CurrentTurnPlayerId = NextPlayerId_NoLock(s.PlayerId);
                 }
 
@@ -329,12 +372,10 @@ namespace CardGameServer.Game
                 }
 
                 PassCount++;
-                // nếu 3 người pass (với 4 players) => bàn trống, người đánh cuối được đánh tiếp
                 if (PassCount >= (_players.Count - 1))
                 {
                     CurrentTrick = null;
                     PassCount = 0;
-                    // lượt về người đánh cuối
                     CurrentTurnPlayerId = LastPlayedByPlayerId;
                 }
                 else
@@ -354,38 +395,23 @@ namespace CardGameServer.Game
             return _players[next].PlayerId;
         }
 
-        // ====== Rules: tối thiểu (rác/đôi/sám/sảnh) ======
         public static Move AnalyzeMove(List<Card> cards)
         {
             var sorted = cards.OrderBy(c => c.Rank).ThenBy(c => c.Suit).ToList();
-            if (sorted.Count == 1)
-                return new Move(MoveType.Single, sorted);
-
-            if (sorted.Count == 2 && sorted[0].Rank == sorted[1].Rank)
-                return new Move(MoveType.Pair, sorted);
-
-            if (sorted.Count == 3 && sorted.All(c => c.Rank == sorted[0].Rank))
-                return new Move(MoveType.Triple, sorted);
+            if (sorted.Count == 1) return new Move(MoveType.Single, sorted);
+            if (sorted.Count == 2 && sorted[0].Rank == sorted[1].Rank) return new Move(MoveType.Pair, sorted);
+            if (sorted.Count == 3 && sorted.All(c => c.Rank == sorted[0].Rank)) return new Move(MoveType.Triple, sorted);
 
             if (sorted.Count >= 3)
             {
-                // sảnh: liên tiếp, không chứa 2
-                if (sorted.Any(c => c.Rank == 15))
-                    return new Move(MoveType.Invalid, sorted);
-
+                if (sorted.Any(c => c.Rank == 15)) return new Move(MoveType.Invalid, sorted);
                 bool consecutive = true;
                 for (int i = 1; i < sorted.Count; i++)
                 {
-                    if (sorted[i].Rank != sorted[i - 1].Rank + 1)
-                    {
-                        consecutive = false;
-                        break;
-                    }
+                    if (sorted[i].Rank != sorted[i - 1].Rank + 1) { consecutive = false; break; }
                 }
-                if (consecutive)
-                    return new Move(MoveType.Straight, sorted);
+                if (consecutive) return new Move(MoveType.Straight, sorted);
             }
-
             return new Move(MoveType.Invalid, sorted);
         }
 
@@ -393,15 +419,11 @@ namespace CardGameServer.Game
         {
             if (current == null) return true;
             if (challenger == null || challenger.Type == MoveType.Invalid) return false;
-
             if (challenger.Type != current.Type) return false;
             if (challenger.Cards.Count != current.Cards.Count) return false;
-
-            // so theo Strength (lá mạnh nhất)
             return challenger.Strength > current.Strength;
         }
 
-        // ====== Build state for sending ======
         public object BuildPublicState()
         {
             lock (_gate)
