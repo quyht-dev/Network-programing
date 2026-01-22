@@ -1,0 +1,285 @@
+<UserControl x:Class="TicTacToe.Client.Views.GameView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignHeight="520" d:DesignWidth="900">
+
+    <UserControl.Resources>
+
+        <!-- Palette -->
+        <SolidColorBrush x:Key="BgBrush" Color="#0B1220"/>
+        <SolidColorBrush x:Key="PanelBrush" Color="#111B2E"/>
+        <SolidColorBrush x:Key="PanelBrush2" Color="#0F182B"/>
+        <SolidColorBrush x:Key="TextBrush" Color="#E6ECFF"/>
+        <SolidColorBrush x:Key="SubTextBrush" Color="#9FB0D0"/>
+        <SolidColorBrush x:Key="BorderBrushSoft" Color="#26314B"/>
+
+        <SolidColorBrush x:Key="PrimaryBrush" Color="#3B82F6"/>
+        <SolidColorBrush x:Key="SuccessBrush" Color="#22C55E"/>
+        <SolidColorBrush x:Key="WarnBrush" Color="#F59E0B"/>
+        <SolidColorBrush x:Key="DangerBrush" Color="#EF4444"/>
+
+        <!-- Button style -->
+        <Style x:Key="NiceButton" TargetType="Button">
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="14,10"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrushSoft}"/>
+            <Setter Property="Background" Value="{StaticResource PanelBrush2}"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="12"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              RecognizesAccessKey="True"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#162444"/>
+                                <Setter Property="BorderBrush" Value="#34507D"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#0F1A33"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.45"/>
+                                <Setter Property="Cursor" Value="Arrow"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Primary button -->
+        <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource NiceButton}">
+            <Setter Property="Background" Value="#132A57"/>
+            <Setter Property="BorderBrush" Value="#2E5BB5"/>
+        </Style>
+
+        <!-- Match button -->
+        <Style x:Key="MatchButton" TargetType="Button" BasedOn="{StaticResource NiceButton}">
+            <Setter Property="Background" Value="#0F3B2A"/>
+            <Setter Property="BorderBrush" Value="#2B8A5A"/>
+        </Style>
+
+        <!-- Board cell button -->
+        <Style x:Key="CellButton" TargetType="Button">
+            <Setter Property="Background" Value="#0E172A"/>
+            <Setter Property="BorderBrush" Value="#27314A"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+            <Setter Property="FontSize" Value="44"/>
+            <Setter Property="FontWeight" Value="Black"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="14"
+                                SnapsToDevicePixels="True">
+                            <Grid>
+                                <ContentPresenter HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#132040"/>
+                                <Setter Property="BorderBrush" Value="#375A96"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#0B1220"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.9"/>
+                                <Setter Property="Cursor" Value="Arrow"/>
+                                <Setter Property="BorderBrush" Value="#2F3E5E"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+    </UserControl.Resources>
+
+    <Grid Background="{StaticResource BgBrush}">
+
+        <!-- Layout -->
+        <Grid Margin="22">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="280"/>
+                <ColumnDefinition Width="20"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Left Panel -->
+            <Border Grid.Column="0"
+                    Background="{StaticResource PanelBrush}"
+                    BorderBrush="{StaticResource BorderBrushSoft}"
+                    BorderThickness="1"
+                    CornerRadius="18"
+                    Padding="18">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel>
+                        <TextBlock Text="Tic-Tac-Toe"
+                                   FontSize="22"
+                                   FontWeight="Black"
+                                   Foreground="{StaticResource TextBrush}"/>
+                        <TextBlock Text="Multi Client - Server • TCP Socket"
+                                   Margin="0,6,0,0"
+                                   FontSize="12"
+                                   Foreground="{StaticResource SubTextBrush}"/>
+                    </StackPanel>
+
+                    <!-- Actions -->
+                    <StackPanel Grid.Row="1" Margin="0,18,0,0">
+                        <Button Content="Connect"
+                                Style="{StaticResource PrimaryButton}"
+                                Command="{Binding ConnectCommand}"/>
+
+                        <Button Content="Find Match"
+                                Margin="0,10,0,0"
+                                Style="{StaticResource MatchButton}"
+                                Command="{Binding FindMatchCommand}"/>
+                    </StackPanel>
+
+                    <!-- Status -->
+                    <Border Grid.Row="2"
+                            Margin="0,18,0,0"
+                            Background="#0B1220"
+                            BorderBrush="{StaticResource BorderBrushSoft}"
+                            BorderThickness="1"
+                            CornerRadius="14"
+                            Padding="12">
+                        <StackPanel>
+                            <TextBlock Text="Status"
+                                       FontSize="12"
+                                       Foreground="{StaticResource SubTextBrush}"/>
+                            <TextBlock Text="{Binding StatusText}"
+                                       Margin="0,6,0,0"
+                                       TextWrapping="Wrap"
+                                       FontSize="14"
+                                       Foreground="{StaticResource TextBrush}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Tips -->
+                    <Border Grid.Row="4"
+                            Margin="0,14,0,0"
+                            Background="#0B1220"
+                            BorderBrush="{StaticResource BorderBrushSoft}"
+                            BorderThickness="1"
+                            CornerRadius="14"
+                            Padding="12">
+                        <TextBlock Foreground="{StaticResource SubTextBrush}"
+                                   FontSize="12"
+                                   TextWrapping="Wrap"
+                                   Text="Gợi ý: Chạy Server trước, mở 2 Client. Connect → Find Match để ghép cặp."/>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- Right: Board Panel -->
+            <Border Grid.Column="2"
+                    Background="{StaticResource PanelBrush}"
+                    BorderBrush="{StaticResource BorderBrushSoft}"
+                    BorderThickness="1"
+                    CornerRadius="18"
+                    Padding="18">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Header -->
+                    <Grid Grid.Row="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel>
+                            <TextBlock Text="Bàn cờ"
+                                       FontSize="18"
+                                       FontWeight="Bold"
+                                       Foreground="{StaticResource TextBrush}"/>
+                            <TextBlock Text="Nhấn vào ô để đánh X/O khi tới lượt"
+                                       Margin="0,4,0,0"
+                                       FontSize="12"
+                                       Foreground="{StaticResource SubTextBrush}"/>
+                        </StackPanel>
+
+                        <!-- Small indicator pill (reuse StatusText for now) -->
+                        <Border Grid.Column="1"
+                                Background="#0B1220"
+                                BorderBrush="{StaticResource BorderBrushSoft}"
+                                BorderThickness="1"
+                                CornerRadius="999"
+                                Padding="10,6"
+                                VerticalAlignment="Center">
+                            <TextBlock Text="{Binding StatusText}"
+                                       FontSize="12"
+                                       Foreground="{StaticResource SubTextBrush}"/>
+                        </Border>
+                    </Grid>
+
+                    <!-- Board -->
+                    <Border Grid.Row="1"
+                            Margin="0,18,0,0"
+                            Background="#0B1220"
+                            BorderBrush="{StaticResource BorderBrushSoft}"
+                            BorderThickness="1"
+                            CornerRadius="18"
+                            Padding="18">
+                        <Viewbox Stretch="Uniform">
+                            <Grid Width="360" Height="360">
+                                <ItemsControl ItemsSource="{Binding Cells}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <UniformGrid Rows="3" Columns="3"/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Button Style="{StaticResource CellButton}"
+                                                    Margin="8"
+                                                    Content="{Binding Text}"
+                                                    IsEnabled="{Binding IsEnabled}"
+                                                    Command="{Binding DataContext.CellClickCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                    CommandParameter="{Binding}"/>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </Grid>
+                        </Viewbox>
+                    </Border>
+                </Grid>
+            </Border>
+
+        </Grid>
+    </Grid>
+</UserControl>

@@ -1,0 +1,103 @@
+@{
+    ViewData["Title"] = "My Blog Manager";
+}
+<div class="container py-4">
+
+    <h2 class="mb-4">My Blogs</h2>
+
+    <!-- Button Create -->
+    <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#createModal">
+        + Create Blog
+    </button>
+
+    <!-- TABLE -->
+    <table class="table table-bordered table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Thumbnail</th>
+                <th>Created At</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="blogList">
+            <tr>
+                <td colspan="5" class="text-center">Loading...</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- ===========================
+  CREATE MODAL
+=========================== -->
+<div class="modal fade" id="createModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create Blog</h5>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label>Title</label>
+                    <input id="createTitle" class="form-control" />
+                </div>
+
+                <div class="mb-3">
+                    <label>Content</label>
+                    <textarea id="createContent" class="form-control" rows="4"></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label>Image</label>
+                    <input type="file" id="createImage" class="form-control" />
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button class="btn btn-primary" onclick="createBlog()">Create</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===========================
+  UPDATE MODAL
+=========================== -->
+<div class="modal fade" id="updateModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Update Blog</h5>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+
+                <input type="hidden" id="updateId" />
+
+                <div class="mb-3">
+                    <label>Title</label>
+                    <input id="updateTitle" class="form-control" />
+                </div>
+
+                <div class="mb-3">
+                    <label>Content</label>
+                    <textarea id="updateContent" class="form-control" rows="4"></textarea>
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button class="btn btn-warning" onclick="updateBlog()">Update</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="~/js/profile.js"></script>

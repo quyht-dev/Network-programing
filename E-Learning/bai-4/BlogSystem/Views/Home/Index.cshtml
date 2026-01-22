@@ -1,0 +1,119 @@
+@{
+    ViewData["Title"] = "Trang chủ";
+}
+
+<section class="container-fluid p-0">
+
+    <!-- Enhanced Hero Banner -->
+    <div class="hero-section d-flex flex-column justify-content-center align-items-center text-white text-center position-relative">
+        <div class="container position-relative" style="z-index: 1;">
+            <h1 class="fw-bold display-4 mb-4">CHÀO MỪNG ĐẾN BLOG SYSTEM</h1>
+            <p class="fs-4 mb-5">Chia sẻ ý tưởng, khám phá tri thức và kết nối cộng đồng</p>
+            
+            <div class="row justify-content-center mt-4">
+                <div class="col-lg-8">
+                    <div class="input-group input-group-lg shadow">
+                        <span class="input-group-text bg-white border-0">
+                            <i class="fas fa-search text-muted"></i>
+                        </span>
+                        <input type="text" id="searchInput" class="form-control border-0" placeholder="Tìm kiếm bài viết...">
+                        <button class="btn btn-gradient border-0 px-4" type="button" id="searchBtn">
+                            Tìm kiếm
+                        </button>
+                    </div>
+                    
+                    <div class="category-filter mt-4">
+                        <button class="btn btn-outline-secondary active" data-sort="">Tất cả</button>
+                        <button class="btn btn-outline-secondary" data-sort="newest">Mới nhất</button>
+                        <button class="btn btn-outline-secondary" data-sort="popular">Phổ biến</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Floating Elements -->
+        <div class="position-absolute floating" style="top: 20%; left: 10%;">
+            <i class="fas fa-pen-fancy fa-2x text-white opacity-25"></i>
+        </div>
+        <div class="position-absolute floating" style="top: 30%; right: 15%; animation-delay: 0.5s;">
+            <i class="fas fa-book-open fa-2x text-white opacity-25"></i>
+        </div>
+        <div class="position-absolute floating" style="bottom: 25%; left: 20%; animation-delay: 1s;">
+            <i class="fas fa-lightbulb fa-2x text-white opacity-25"></i>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container py-5">
+
+        <!-- Loading Spinner -->
+        <div id="loadingSpinner" class="text-center py-5" style="display: none;">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Đang tải dữ liệu...</p>
+        </div>
+
+        <!-- Featured Blog Container -->
+        <div id="featuredBlogContainer"></div>
+
+        <!-- Blog List Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="section-title fw-bold mb-0">Bài viết mới nhất</h4>
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" id="sortDropdown">
+                    <i class="fas fa-sort me-2"></i> Sắp xếp
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#" data-sort="">Mặc định</a></li>
+                    <li><a class="dropdown-item" href="#" data-sort="newest">Mới nhất</a></li>
+                    <li><a class="dropdown-item" href="#" data-sort="oldest">Cũ nhất</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Blog List Container -->
+        <div id="blogListContainer" class="row g-4"></div>
+
+        <!-- No Blogs Message -->
+        <div id="noBlogsMessage" class="text-center py-5" style="display: none;">
+            <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">Chưa có bài viết nào</h5>
+            <p class="text-muted">Hãy là người đầu tiên đăng bài viết!</p>
+            <a href="/Auth/Login" class="btn btn-gradient px-4 py-2">
+                <i class="fas fa-pen-alt me-2"></i> Viết bài ngay
+            </a>
+        </div>
+
+        <!-- View More Button -->
+        <div class="view-more-container text-center mt-5" id="viewMoreContainer" style="display: none;">
+            <button id="loadMoreBtn" class="btn btn-gradient px-5 py-3 rounded-pill position-relative">
+                <i class="fas fa-plus-circle me-2"></i> Xem thêm bài viết
+            </button>
+        </div>
+
+        <!-- Newsletter Section -->
+        <div class="row justify-content-center mt-5 pt-5">
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-lg p-5 text-center" style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);">
+                    <h3 class="fw-bold mb-3">Đăng ký nhận tin mới</h3>
+                    <p class="text-muted mb-4">Nhận thông báo khi có bài viết mới và nội dung độc quyền</p>
+                    
+                    <div class="row justify-content-center">
+                        <div class="col-md-8">
+                            <div class="input-group mb-3">
+                                <input type="email" class="form-control form-control-lg" placeholder="Email của bạn">
+                                <button class="btn btn-dark btn-lg px-4" type="button">
+                                    Đăng ký
+                                </button>
+                            </div>
+                            <small class="text-muted">Chúng tôi tôn trọng quyền riêng tư của bạn</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</section>
